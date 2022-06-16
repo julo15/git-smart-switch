@@ -1,0 +1,16 @@
+{
+  "name": "git-smart-switch",
+  "version": "0.1.0",
+  "description": "A replacement for git checkout and git switch to make switching between branches easier.",
+  "main": "index.js",
+  "author": "Julian Lo",
+  "license": "MIT",
+  "scripts": {
+    "start": "./src/main.rb",
+    "dev-install": "yarn global add file:$INIT_CWD",
+    "dev-uninstall": "yarn global remove git-smart-switch"
+  },
+  "bin": {
+    "git-ss": "./src/main.rb"
+  }
+}
