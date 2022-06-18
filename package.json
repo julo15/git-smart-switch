@@ -2,6 +2,11 @@
   "name": "git-smart-switch",
   "version": "0.2.0",
   "description": "A replacement for git checkout and git switch to make switching between branches easier.",
+  "homepage": "https://github.com/julo15/git-smart-switch",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/julo15/git-smart-switch.git"
+  },
   "main": "index.js",
   "author": "Julian Lo",
   "license": "MIT",
