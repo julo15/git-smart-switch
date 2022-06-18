@@ -8,9 +8,26 @@ A replacement for `git checkout` and `git switch` to make switching between bran
 ## Installation
 
 ```
+# With NPM
 npm i -g git-smart-switch
 
+# Or with Yarn
+yarn global add git-smart-switch
+
+# Then use the following to make a git alias
 git config --global alias.ss '!git-ss'
+```
+
+## Usage
+```
+# Checkout a specific branch. No need to type the entire branch name.
+git ss <branch>
+
+# Create and checkout a new branch.
+git ss -n <branch>
+
+# List available branches
+git ss
 ```
 
 ## Why?
@@ -108,9 +125,8 @@ $ git reset --soft HEAD^
 
 `git-smart-switch` makes this workflow easy by managing **per-branch stash entries**.
 
-- Any time you switch away from a branch using `git ss`, it will create a stash entry associated with that branch.
+- Any time you switch away from a branch using `git ss`, it will stash the changes for that branch.
 - When you switch back to the branch later, `git ss` will automatically apply the stash associated with that branch.
-- Each branch can have its own stash entry that `git ss` will automatically push and pop for you.
 
 ```
 ## 1) Use 'git ss' to switch branches and stash any changes.

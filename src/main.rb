@@ -8,7 +8,9 @@ def stash_message(branch_name)
 end
 
 def stash(branch_name)
-  puts "#{"Attempting to stash changes for".dim} #{branch_name.yellow}"
+  return if `git status -s`.lines.length == 0
+
+  puts "#{"Stashing changes for".dim} #{branch_name.yellow}"
   puts `git stash -u -m '#{stash_message(branch_name)}'`
   puts
 end
@@ -22,18 +24,20 @@ def switch(current_branch, dest_branch, create)
 
   if create then
     puts "Creating branch #{dest_branch.yellow}".dim
-    puts `git checkout -b #{dest_branch}`
+    `git checkout -b #{dest_branch}`
   else 
     puts "Switching from #{current_branch.yellow} #{'-->'.dim} #{dest_branch.yellow}".dim
-    puts `git checkout #{dest_branch}`
+    `git checkout #{dest_branch}`
   end
 
   if !create && apply_stashes then
-    puts "#{"Looking for stash to apply to".dim} #{dest_branch.yellow}"
     dest_stash_message = stash_message(dest_branch)
     found_stashes = `git stash list`.lines.select {|line| line.strip.end_with?(dest_stash_message)}
 
     if found_stashes.length > 0 then
+      puts
+      puts "#{"Applying stash found for".dim} #{dest_branch.yellow}"
+
       matches = found_stashes[0].match /stash@{(\d+)}/
       index = matches[1]
 
@@ -41,13 +45,10 @@ def switch(current_branch, dest_branch, create)
       stash_summary = `git stash show -u stash@{#{index}}`
       show_stash_summary = $?.success?
 
-      puts "Stash found. Applying"
       if show_stash_summary then
         puts stash_summary
       end
       puts `git stash pop --index #{index} --quiet`
-    else
-      puts "No stashes found for branch '#{dest_branch}'"
     end
   end
 end
