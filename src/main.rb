@@ -3,27 +3,45 @@
 require 'optparse'
 require_relative 'colorize'
 
+FORCE_STASH = true
+
 def stash_message(branch_name)
   "smart-switch|#{branch_name}"
 end
 
-def stash(branch_name)
+def stash(branch_name, force)
   return if `git status -s`.lines.length == 0
 
-  puts "#{"Stashing changes for".dim} #{branch_name.yellow}"
+  if !force then
+    puts 'There are uncommitted changes. Stash them? Y/n/c'.bold
+    puts '  Y: (Default) Yes, stash and proceed switching branch'
+    puts '  n: Don\'t stash, but proceed switching branch'
+    puts '  c: Cancel'
+    case STDIN.gets.chomp.downcase
+    when 'n'
+      return
+    when 'c'
+      exit
+    when 'y', ''
+    else
+      abort('Unknown response')
+    end
+  end
+
+  puts "#{'Stashing changes'.green} #{'for'.dim} #{branch_name.yellow}"
   puts `git stash -u -m '#{stash_message(branch_name)}'`
   puts
 end
 
-def switch(current_branch, dest_branch, create)
+def switch(current_branch, dest_branch, create, force_stash)
   apply_stashes = current_branch != dest_branch
 
   if apply_stashes then
-    stash(current_branch)
+    stash(current_branch, force_stash)
   end
 
   if create then
-    puts "Creating branch #{dest_branch.yellow}".dim
+    puts "Creating branch #{dest_branch.yellow}".yellow
     `git checkout -b #{dest_branch}`
   else 
     puts "Switching from #{current_branch.yellow} #{'-->'.dim} #{dest_branch.yellow}".dim
@@ -36,7 +54,7 @@ def switch(current_branch, dest_branch, create)
 
     if found_stashes.length > 0 then
       puts
-      puts "#{"Applying stash found for".dim} #{dest_branch.yellow}"
+      puts "#{"Applying stash".green} #{"found for".dim} #{dest_branch.yellow}"
 
       matches = found_stashes[0].match /stash@{(\d+)}/
       index = matches[1]
@@ -56,13 +74,19 @@ end
 # Option parsing
 options = {}
 OptionParser.new do |opts|
-  opts.banner = 'Usage: gss [-n] [branch-pattern]'
+  opts.banner = 'Usage: git-ss [-b] [branch-pattern]'
   opts.banner += "\nFYI: Running without specifying branch-pattern will list all branches"
 
   opts.separator ""
   opts.separator "Specific options:"
 
-  opts.on('-n', '--new-branch', 'Create new branch') do |name|
+  if !FORCE_STASH then
+    opts.on('-f', '--force-stash', 'Force stashing without prompting') do
+      options[:force_stash?] = true
+    end
+  end
+
+  opts.on('-b', '--new-branch', 'Create new branch') do
     options[:new_branch?] = true
   end
 
@@ -103,7 +127,7 @@ end
 # Handle new branch mode
 if options[:new_branch?] then
   abort("A branch named #{options[:branch_pattern].yellow} already exists") if branch_output.length > 0
-  switch(current_branch, options[:branch_pattern], true)
+  switch(current_branch, options[:branch_pattern], true, options[:force_stash?] || FORCE_STASH)
   exit
 end
 
@@ -117,7 +141,7 @@ if options[:branch_pattern] != nil && branch_output.length == 1 then
       puts "Found branch matching '#{options[:branch_pattern]}': #{token.yellow}.".bold
       puts
 
-      switch(current_branch, token, false)
+      switch(current_branch, token, false, options[:force_stash?] || FORCE_STASH)
       break
     end
   end
