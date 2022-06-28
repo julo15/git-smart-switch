@@ -9,20 +9,20 @@ def stash_message(branch_name)
   "smart-switch|#{branch_name}"
 end
 
-def stash(branch_name, force)
+def stash(branch_name, prompt)
   return if `git status -s`.lines.length == 0
 
-  if !force then
-    puts 'There are uncommitted changes. Stash them? Y/n/c'.bold
-    puts '  Y: (Default) Yes, stash and proceed switching branch'
-    puts '  n: Don\'t stash, but proceed switching branch'
+  if prompt then
+    puts 'There are uncommitted changes. Stash them before checking out new branch? y/n/c'.bold
+    puts '  y: Yes, stash and then checkout the new branch'
+    puts '  n: No, don\'t stash, just checkout the new branch'
     puts '  c: Cancel'
     case STDIN.gets.chomp.downcase
     when 'n'
       return
     when 'c'
       exit
-    when 'y', ''
+    when 'y'
     else
       abort('Unknown response')
     end
@@ -33,11 +33,11 @@ def stash(branch_name, force)
   puts
 end
 
-def switch(current_branch, dest_branch, create, force_stash)
+def switch(current_branch, dest_branch, create)
   apply_stashes = current_branch != dest_branch
 
   if apply_stashes then
-    stash(current_branch, force_stash)
+    stash(current_branch, create)
   end
 
   if create then
@@ -127,7 +127,7 @@ end
 # Handle new branch mode
 if options[:new_branch?] then
   abort("A branch named #{options[:branch_pattern].yellow} already exists") if branch_output.length > 0
-  switch(current_branch, options[:branch_pattern], true, options[:force_stash?] || FORCE_STASH)
+  switch(current_branch, options[:branch_pattern], true)
   exit
 end
 
@@ -141,7 +141,7 @@ if options[:branch_pattern] != nil && branch_output.length == 1 then
       puts "Found branch matching '#{options[:branch_pattern]}': #{token.yellow}.".bold
       puts
 
-      switch(current_branch, token, false, options[:force_stash?] || FORCE_STASH)
+      switch(current_branch, token, false)
       break
     end
   end
